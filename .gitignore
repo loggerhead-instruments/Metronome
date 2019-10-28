@@ -3,3 +3,9 @@
 *.LOG
 *.PcbDocPreview
 *.SchDocPreview
+Altium/Project Outputs for OpenSwitch/Design Rule Check - OpenSwitch.drc
+*.html
+Altium/Project Outputs for OpenSwitch/Pick Place for OpenSwitch.csv
+Altium/Project Outputs for OpenSwitch/Pick Place for OpenSwitch.xlsx
+Altium/Project Outputs for OpenSwitch/Status Report.Txt
+Altium/Project Outputs for OpenSwitch/~$Pick Place for OpenSwitch.xlsx
