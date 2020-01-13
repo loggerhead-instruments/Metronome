@@ -13,6 +13,7 @@
 - List of Times and durations
 - read schedule from microSD
  - run
+ - log header
  - DS3232 RTC (optional)
  */
 
@@ -112,7 +113,7 @@ void setup() {
   
   digitalWrite(ledGreen, ledOn);
   digitalWrite(ledRed, ledOff);
-  digitalWrite(relay1, HIGH);
+  digitalWrite(relay1, LOW);
   digitalWrite(relay2, LOW);
   digitalWrite(relay3, LOW);
   digitalWrite(relay4, LOW);
@@ -184,20 +185,20 @@ void loop() {
   displayClock(BOTTOM);
   display.display();
 
-  delay(10000);
-
+  
   // set alarm and sleep
 
 
   // turn on all 4 channels
-
-  if(sdFlag) logEntry();
+  relayOn();
+  if(sdFlag) logEntry(1);
 
   // sleep until time to turn off
+  delay(10000);
 
   // turn off
-
- // logEntry();
+  relayOff();
+  if(sdFlag) logEntry(0);
  // updateGpsTime();  // update real-time clock with GPS time
 
 }
@@ -218,7 +219,7 @@ int updateGpsTime(){
   return(goodGPS);
 }
 
-void logEntry(){
+void logEntry(int relayStatus){
    char filename[30];
    getTime();
 
@@ -234,7 +235,9 @@ void logEntry(){
       logFile.print(',');
       logFile.print(voltage); 
       logFile.print(',');
-      logFile.println(metronomeVersion);
+      logFile.print(metronomeVersion);
+      logFile.print(',');
+      logFile.println(relayStatus);
       logFile.close();
    }
 }
@@ -274,4 +277,18 @@ int getNextOnTime(){
     }
   }
   return nextIndex;
+}
+
+void relayOn(){
+  digitalWrite(relay1, HIGH);
+  digitalWrite(relay2, HIGH);
+  digitalWrite(relay3, HIGH);
+  digitalWrite(relay4, HIGH);
+}
+
+void relayOff(){
+  digitalWrite(relay1, LOW);
+  digitalWrite(relay2, LOW);
+  digitalWrite(relay3, LOW);
+  digitalWrite(relay4, LOW);
 }
