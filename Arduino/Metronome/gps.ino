@@ -266,7 +266,6 @@ void gpsGetTimeLatLon(){
   SerialUSB.print("GPS search time:");
   SerialUSB.println(millis()-gpsTimeOutStart);
   gpsSpewOff();
-  delay(200);
   gpsSerial.end();
   SerialUSB.print("Good GPS:");
   SerialUSB.println(goodGPS);

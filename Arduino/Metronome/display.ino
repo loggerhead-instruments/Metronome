@@ -1,31 +1,19 @@
 #define setStart 0
-#define setRecDur 1
-#define setRecSleep 2
+#define setSchedule 1
+
 boolean settingsChanged = 0;
 int curMenuItem = 0;
-volatile int maxMenuItem = 3;
+volatile int maxMenuItem = 2;
 char *menuItem[] = {"Start",
-                     "Channel",
-                     "Start Hour1",
-                     "Duration",
-                     "Gain",
-                     "Time",
-                     "Mode",
-                     "Diel Time"
+                     "Schedule",
                      };
 
-char *helpText[] = {"ENTER:Start RecordingupButton/DN:scroll menu",
-                    "ENTER:Set Record Dur\nupButton/DN:scroll menu",
-                    "ENTER:Set Sleep Dur\nupButton/DN:scroll menu",
-                    "ENTER:Set Sample RateupButton/DN:scroll menu",
-                    "ENTER:Set Gain (dB)\nupButton/DN:scroll menu",
-                    "ENTER:Set Date/Time\nupButton/DN:scroll menu",
-                    "ENTER:Set Mode\nupButton/DN:scroll menu",
-                    "ENTER:Set Diel Time\nupButton/DN:scroll menu"
+char *helpText[] = {"UP/DOWN:Scroll menu\nENTER:Start",
+                    "ENTER:View Schedule\nUP/DN:scroll menu",
                     };
 
-/* DISPLAY FUNCTIONS
- *  
+/* 
+ *  DISPLAY FUNCTIONS
  */
 
 void displayOn(){
@@ -87,18 +75,25 @@ void manualSettings(){
             cDisplay();
             display.println("Starting..");
             display.setTextSize(1);
-            display.print("Press upButton+DN to Stop");
             display.display();
             delay(2000);
             startRec = 1;  //start recording 
             break;
-        case setRecDur:
+        case setSchedule:
             while(digitalRead(enterButton)==1){
-              rec_dur = updateVal(rec_dur, 1, 3600);
               cDisplay();
-              display.println("Record:");
-              display.print(rec_dur);
-              display.println("s");
+              display.setTextSize(2);
+              display.println("Schedule");
+              display.setTextSize(1);
+              for(int i=0; i<nTimes; i++){
+                display.print(i); display.print(":");
+                printZero(scheduleHour[i]);
+                display.print(scheduleHour[i]); display.print(":");
+                printZero(scheduleMinute[i]);
+                display.print(scheduleMinute[i]); display.print(" ");
+                display.print(duration[i]);
+                display.println("m");
+              }
               displayVoltage();
               display.display();
               delay(2);
@@ -106,21 +101,6 @@ void manualSettings(){
             while(digitalRead(enterButton)==0); // wait to let go
             curMenuItem = setStart;
             break;
-          
-        case setRecSleep:
-          while(digitalRead(enterButton)==1){
-            rec_int = updateVal(rec_int, 0, 3600 * 24);
-            cDisplay();
-            display.println("Sleep:");
-            display.print(rec_int);
-            display.println("s");
-            displayVoltage();
-            display.display();
-            delay(2);
-          }
-          while(digitalRead(enterButton)==0); // wait to let go
-          curMenuItem = setStart;
-          break;
       }
       
       if (settingsChanged) {
@@ -137,47 +117,11 @@ void manualSettings(){
     delay(10);
   }
 }
-  
-int updateVal(long curVal, long minVal, long maxVal){
-  boolean upVal = digitalRead(upButton);
-  boolean downVal = digitalRead(downButton);
-  static int heldDown = 0;
-  static int heldUp = 0;
-
-  if(upVal==0){
-    settingsChanged = 1;
-    if (heldUp < 20) delay(200);
-      curVal += 1;
-      heldUp += 1;
-    }
-    else heldUp = 0;
-
-    if (heldUp > 100) curVal += 4; //if held up for a while skip an additional 4
-    if (heldUp > 200) curVal += 55; //if held up for a while skip an additional 4
-    
-    if(downVal==0){
-      settingsChanged = 1;
-      if(heldDown < 20) delay(200);
-      if(curVal < 61) { // going down to 0, go back to slow mode
-        heldDown = 0;
-      }
-        curVal -= 1;
-        heldDown += 1;
-    }
-    else heldDown = 0;
-
-    if(heldDown > 100) curVal -= 4;
-    if(heldDown > 200) curVal -= 55;
-
-    if (curVal < minVal) curVal = maxVal;
-    if (curVal > maxVal) curVal = minVal;
-    return curVal;
-}
 
 void cDisplay(){
   display.clearDisplay();
   display.setTextColor(WHITE);
-  display.setTextSize(1);
+  display.setTextSize(2);
   display.setCursor(0,0);
 }
 
@@ -198,17 +142,17 @@ void displayClock(int loc){
 }
 
 void printTime(){
-  Serial.print(year);
-  Serial.print('-');
-  Serial.print(month);
-  Serial.print('-');
-  Serial.print(day);
-  Serial.print(" ");
-  Serial.print(hour);
-  Serial.print(':');
-  Serial.print(minute);
-  Serial.print(':');
-  Serial.println(second);
+  SerialUSB.print(year);
+  SerialUSB.print('-');
+  SerialUSB.print(month);
+  SerialUSB.print('-');
+  SerialUSB.print(day);
+  SerialUSB.print(" ");
+  SerialUSB.print(hour);
+  SerialUSB.print(':');
+  SerialUSB.print(minute);
+  SerialUSB.print(':');
+  SerialUSB.println(second);
 }
 
 void displayMenu(){

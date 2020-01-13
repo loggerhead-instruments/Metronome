@@ -42,3 +42,8 @@ void getTime(){
   minute = rtc.getMinutes();
   second = rtc.getSeconds();
 }
+
+unsigned long getUnixTime(){
+  getTime();
+  return RTCToUNIXTime(year + 2000, month, day, hour, minute, second);
+}
