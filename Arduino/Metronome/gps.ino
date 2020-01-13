@@ -243,6 +243,7 @@ void gpsGetTimeLatLon(){
     cDisplay();
     display.println("GPS");
     display.println();
+    display.setTextSize(1);
     display.println("Searching...");
     display.display();
   }

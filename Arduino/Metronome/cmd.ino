@@ -1,4 +1,4 @@
-boolean loadSchedule()
+int loadSchedule()
 {
   char s[30];
   char c;
@@ -8,8 +8,9 @@ boolean loadSchedule()
   File file;
 
   // Read simulated depth file
-  file = sd.open("schedule.txt");
+  file = sd.open("schedule.txt", FILE_READ);
   SerialUSB.println("Schedule file");
+  SerialUSB.println(file);
   if(file){
     do{
       j = 0;
@@ -31,5 +32,5 @@ boolean loadSchedule()
     file.close();
     return i;  
   }
-  return nTimes;
+  return 0;
 }

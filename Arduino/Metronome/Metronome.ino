@@ -12,20 +12,20 @@
 
 - List of Times and durations
 - read schedule from microSD
- 
  - run
  - DS3232 RTC (optional)
  */
 
-#define metronomeVersion "2020-01-13"
+#define metronomeVersion 20200113
 
-#define MAXTIMES 20
-int nTimes = 4;
-int scheduleHour[] = {1,7,13,22,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; //start hour
-int scheduleMinute[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; // start minute
+#define MAXTIMES 24
+volatile int nTimes = 4;
+int scheduleHour[] = {1,7,13,22,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; //start hour
+int scheduleMinute[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; // start minute
 float scheduleFracHour[MAXTIMES];
-int duration[] = {40,40,40,40,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};  // duration on in minutes
+int duration[] = {40,40,40,40,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};  // duration on in minutes
 
+#include <SPI.h>
 #include <Wire.h>
 #include <RTCZero.h>
 #include <SdFat.h>
@@ -88,12 +88,12 @@ long gpsTimeOutThreshold = 120000;
 // SD file system
 SdFat sd;
 File dataFile;
+int sdFlag = 1; // =0 if can't see sd
 
 void setup() {
   SerialUSB.begin(115200); // Serial monitor
-  delay(1000);
+  delay(5000);
   SerialUSB.println("Metronome");
-  delay(3000);
   rtc.begin();
   pinMode(ledGreen, OUTPUT);
   pinMode(ledRed, OUTPUT);
@@ -129,10 +129,18 @@ void setup() {
   display.println("Metronome");
   display.display();
 
+ if (!sd.begin(10, SPI_FULL_SPEED)) {
+    SerialUSB.println("Card failed");
+    display.println("No SD Card");
+    sdFlag = 0;
+    display.display();
+    delay(5000);
+  }
+
   while(!goodGPS){
     gpsGetTimeLatLon();
     if(!goodGPS){
-        Serial.println("Unable to get GPS");
+        SerialUSB.println("Unable to get GPS");
         cDisplay();
         display.println();
         display.println("Wait for GPS");
@@ -144,8 +152,13 @@ void setup() {
   rtc.setTime(gpsHour, gpsMinute, gpsSecond);
   rtc.setDate(gpsDay, gpsMonth, gpsYear);
 
-  nTimes = loadSchedule();
+  if(sdFlag){
+    int nLines = loadSchedule();
+    if(nLines>0) nTimes = nLines;
+  }
+
   manualSettings();
+  
   for(int i=0; i<nTimes; i++){
     scheduleFracHour[i] = scheduleHour[i] + (scheduleMinute[i]/60.0);
   }
@@ -153,11 +166,23 @@ void setup() {
 
 void loop() {
   // get next wake time from list based on current time
+  getTime();
   int nextOnTimeIndex = getNextOnTime();
   printTime();
   SerialUSB.print("Next Start:");
   SerialUSB.print(scheduleHour[nextOnTimeIndex]);SerialUSB.print(":");
   SerialUSB.print(scheduleMinute[nextOnTimeIndex]);
+
+  cDisplay();
+  display.println("Next");
+  display.setTextSize(1);
+  display.print(scheduleHour[nextOnTimeIndex]); display.print(":");
+  display.println(scheduleMinute[nextOnTimeIndex]);
+  display.print(duration[nextOnTimeIndex]); display.println(" minutes");
+  displayVoltage();
+  
+  displayClock(BOTTOM);
+  display.display();
 
   delay(10000);
 
@@ -166,14 +191,14 @@ void loop() {
 
   // turn on all 4 channels
 
-  logEntry();
+  if(sdFlag) logEntry();
 
   // sleep until time to turn off
 
   // turn off
 
-  logEntry();
-  updateGpsTime();  // update real-time clock with GPS time
+ // logEntry();
+ // updateGpsTime();  // update real-time clock with GPS time
 
 }
 
@@ -218,14 +243,19 @@ int getNextOnTime(){
   float curHour = hour + (minute/60.0);
   float difHour[MAXTIMES];
   // calc time to next hour from list
-  for(int i=1; i<nTimes; i++){
+  SerialUSB.print("nTimes:"); SerialUSB.println(nTimes);
+  SerialUSB.print("Cur hour:"); SerialUSB.println(curHour);
+  SerialUSB.println("Frac Hour   Dif Hour");
+  for(int i=0; i<nTimes; i++){
     difHour[i] = scheduleFracHour[i] - curHour;
+    SerialUSB.print(scheduleFracHour[i]); SerialUSB.print("  ");
+    SerialUSB.println(difHour[i]);
   } 
 
   // what is minimum positive value
   float minDif = 25;
   int nextIndex;
-  for(int i=1; i<nTimes; i++){
+  for(int i=0; i<nTimes; i++){
     if(difHour[i]>0){
       if(difHour[i]<minDif) {
         minDif = difHour[i];
@@ -236,7 +266,7 @@ int getNextOnTime(){
 
   // no positive values; so pick most negative one
   if(minDif==25){
-    for(int i=1; i<nTimes; i++){
+    for(int i=0; i<nTimes; i++){
       if(difHour[i]<minDif){
         minDif = difHour[i];
         nextIndex = i;
