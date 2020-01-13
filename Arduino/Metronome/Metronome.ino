@@ -5,14 +5,27 @@
 
 /*
  To Do:
+ Requirements:
+ turn the system ON every six hours for 40 mins. 
+ System should be turned ON at 1:00, 7:00, 13:00, and 19:00
+ GPS clock Sync at least once a day should be performed.
+
+For each channel
+- ON Time (HH:MM) (any time, and it should figure out which ones are valid)
+- On Duration (minutes)
+- ON Interval (hours)
+
+OR
+
+- List of Times and durations
+ 
  - real-time clock
- - display
- - buttonsvf
- - figure out setup flow
+ - buttons
  - GPS
  - microSD (store log file)
  */
 
+#define metronomeVersion "2020-01-13"
 
 #include <Wire.h>
 #include <RTCZero.h>
@@ -53,6 +66,8 @@ volatile float voltage;
 int rec_dur = 60;
 int rec_int = 60;
 
+/* Create an rtc object */
+RTCZero rtc;
 /* Change these values to set the current initial time and date */
 volatile byte second = 0;
 volatile byte minute = 0;
@@ -61,7 +76,22 @@ volatile byte day = 1;
 volatile byte month = 1;
 volatile byte year = 20;
 
+boolean introPeriod=1;  //flag for introductory period; used for keeping LED on for a little while
+
+// GPS
+#define gpsSerial Serial1
+float latitude = 0.0;
+float longitude = 0.0;
+char latHem, lonHem;
+int gpsYear = 20, gpsMonth = 1, gpsDay = 4, gpsHour = 22, gpsMinute = 5, gpsSecond = 0;
+int goodGPS = 0;
+long gpsTimeOutThreshold = 120000;
+
 void setup() {
+  SerialUSB.begin(115200); // Serial monitor
+  delay(1000);
+  SerialUSB.println("Metronome");
+  rtc.begin();
   pinMode(ledGreen, OUTPUT);
   pinMode(ledRed, OUTPUT);
   pinMode(relay1, OUTPUT);
@@ -95,8 +125,19 @@ void setup() {
   cDisplay();
   display.println("Metronome");
   display.display();
-  
 
+  while(!goodGPS){
+    gpsGetTimeLatLon();
+    if(!goodGPS){
+        Serial.println("Unable to get GPS");
+        cDisplay();
+        display.println();
+        display.println("Wait for GPS");
+        display.println("Do not deploy");
+        display.display();
+        delay(2000);
+    }
+  }
 }
 
 void loop() {
