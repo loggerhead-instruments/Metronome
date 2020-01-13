@@ -1,13 +1,13 @@
 // Metronome Switch Timer
 // Loggerhead Instruments
-// c2019  
+// c2020
 // David Mann
 
 /*
  To Do:
  - real-time clock
  - display
- - buttons
+ - buttonsvf
  - figure out setup flow
  - GPS
  - microSD (store log file)
@@ -15,10 +15,20 @@
 
 
 #include <Wire.h>
-#include <SPI.h>
-#include <SdFat.h>
 #include <RTCZero.h>
-#include "LowPower.h"
+
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+#include <Adafruit_FeatherOLED.h>
+
+#define OLED_RESET -1
+#define displayLine1 0
+#define displayLine2 9
+#define displayLine3 18
+#define displayLine4 27
+Adafruit_FeatherOLED display = Adafruit_FeatherOLED();
+#define BOTTOM 25
+#define BOTTOM 55
 
 #define ledOn LOW
 #define ledOff HIGH
@@ -35,10 +45,21 @@
 #define pin12 12
 #define pin6 6
 #define pin7 7
+#define vSense A4 
 
 
-SdFat sd;
-File dataFile;
+volatile float voltage;
+
+int rec_dur = 60;
+int rec_int = 60;
+
+/* Change these values to set the current initial time and date */
+volatile byte second = 0;
+volatile byte minute = 0;
+volatile byte hour = 17;
+volatile byte day = 1;
+volatile byte month = 1;
+volatile byte year = 20;
 
 void setup() {
   pinMode(ledGreen, OUTPUT);
@@ -54,6 +75,7 @@ void setup() {
   pinMode(pin12, OUTPUT);
   pinMode(pin6, OUTPUT);
   pinMode(pin7, OUTPUT);
+  pinMode(vSense, INPUT);
   
   digitalWrite(ledGreen, ledOn);
   digitalWrite(ledRed, ledOff);
@@ -63,8 +85,16 @@ void setup() {
   digitalWrite(relay4, LOW);
   digitalWrite(pin13, LOW);
   digitalWrite(pin12, LOW);
-  digitalWrite(pin13, LOW);
-  digitalWrite(pin14, LOW);
+  digitalWrite(pin6, LOW);
+  digitalWrite(pin7, LOW);
+
+  Wire.begin();
+
+  displayOn();
+  delay(140);
+  cDisplay();
+  display.println("Metronome");
+  display.display();
   
 
 }
@@ -72,4 +102,11 @@ void setup() {
 void loop() {
   // put your main code here, to run repeatedly:
 
+}
+
+float readVoltage(){
+  float vDivider = 0.5;
+  float vReg = 3.3;
+  float voltage = (float) analogRead(vSense) * vReg / (vDivider * 1024.0);
+  return voltage;
 }
