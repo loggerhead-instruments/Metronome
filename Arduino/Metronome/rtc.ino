@@ -33,3 +33,12 @@ unsigned long RTCToUNIXTime(int uYear, int uMonth, int uDay, int uHour, int uMin
 
   return Ticks;
 }
+
+void getTime(){
+  day = rtc.getDay();
+  month = rtc.getMonth();
+  year = rtc.getYear();
+  hour = rtc.getHours();
+  minute = rtc.getMinutes();
+  second = rtc.getSeconds();
+}

@@ -29,9 +29,7 @@ char *helpText[] = {"ENTER:Start RecordingupButton/DN:scroll menu",
  */
 
 void displayOn(){
-  //display.ssd1306_command(SSD1306_DISPLAYON);
-  display.init();
-  display.setBatteryVisible(true);
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
 }
 
 void displayOff(){
@@ -134,7 +132,7 @@ void manualSettings(){
     cDisplay();
     displayMenu();
     displayVoltage();
-  //  displayClock(BOTTOM);
+    displayClock(BOTTOM);
     display.display();
     delay(10);
   }
@@ -180,10 +178,11 @@ void cDisplay(){
   display.clearDisplay();
   display.setTextColor(WHITE);
   display.setTextSize(1);
-  display.setCursor(0,displayLine1);
+  display.setCursor(0,0);
 }
 
 void displayClock(int loc){
+  getTime();  // microcontroller clock
   display.setTextSize(1);
   display.setCursor(0,loc);
   display.print(year);
