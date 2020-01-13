@@ -187,17 +187,37 @@ void loop() {
 
   
   // set alarm and sleep
+  rtc.setAlarmTime(scheduleHour[nextOnTimeIndex],scheduleMinute[nextOnTimeIndex], 0);
+  rtc.enableAlarm(rtc.MATCH_HHMMSS);
+  rtc.attachInterrupt(alarmMatch);
+  rtc.standbyMode();
 
+  // ... Sleeping here ...
+
+  // ... Awake ...
+  rtc.detachInterrupt();
+  rtc.disableAlarm();
 
   // turn on all 4 channels
   relayOn();
   if(sdFlag) logEntry(1);
 
-  // sleep until time to turn off
-  delay(10000);
-
-  // turn off
-  relayOff();
+  // sleep 1 minute at a time and flash led
+  rtc.setAlarmSeconds(0);
+  for(int i = 0; i<duration[nextOnTimeIndex]; i++){
+    getTime();
+    int alarmMinute = minute + 1;
+    if(minute>59) minute = 0;
+    rtc.setAlarmMinutes(minute + 1);
+    rtc.enableAlarm(rtc.MATCH_MMSS);
+    rtc.attachInterrupt(alarmMatch);
+    rtc.standbyMode();
+    rtc.detachInterrupt();
+    digitalWrite(ledGreen, ledOn);
+    delay(100);
+    digitalWrite(ledGreen, ledOff);
+  }
+  relayOff(); // turn off
   if(sdFlag) logEntry(0);
  // updateGpsTime();  // update real-time clock with GPS time
 
@@ -291,4 +311,9 @@ void relayOff(){
   digitalWrite(relay2, LOW);
   digitalWrite(relay3, LOW);
   digitalWrite(relay4, LOW);
+}
+
+void alarmMatch()
+{
+  digitalWrite(LED_BUILTIN, HIGH);
 }
