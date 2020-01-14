@@ -75,8 +75,8 @@ int gps(byte incomingByte){
             splitStr[j][k] = gpsStream[i];
           else{
             splitStr[j][k] = '\0';
-            SerialUSB.print(j); SerialUSB.print(":");
-            SerialUSB.println(splitStr[j]);
+//            SerialUSB.print(j); SerialUSB.print(":");
+//            SerialUSB.println(splitStr[j]);
             k = -1;  // so ends up being 0 after k++
             j++;
           }
