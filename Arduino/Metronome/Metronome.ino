@@ -8,7 +8,6 @@
  - DS3232 RTC (optional)
  - measure current draw
  - check voltage divider is OK for 12 V input
- - scroll list of input times if more than 8 with UP/DN
  - sleep GPS
  */
 

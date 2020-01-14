@@ -81,11 +81,29 @@ void manualSettings(){
             break;
         case setSchedule:
             while(digitalRead(enterButton)==1){
+              int startTimeIndex;
+              int endTimeIndex;
+              if(digitalRead(downButton)==0) {
+                startTimeIndex--;
+                if(startTimeIndex<0) startTimeIndex = 0;
+                while(digitalRead(downButton)==0); // wait to let go
+              }
+              if(digitalRead(upButton)==0) {
+                startTimeIndex++;
+                if(startTimeIndex>nTimes - 4) startTimeIndex = nTimes - 4;
+                if(startTimeIndex<0) startTimeIndex = 0;
+                while(digitalRead(upButton)==0); // wait to let go
+              }
+
+              endTimeIndex = startTimeIndex + 5;
+              if(endTimeIndex>nTimes) endTimeIndex = nTimes;
+              
               cDisplay();
               display.setTextSize(2);
               display.println("Schedule");
               display.setTextSize(1);
-              for(int i=0; i<nTimes; i++){
+              
+              for(int i=startTimeIndex; i<endTimeIndex; i++){
                 display.print(i); display.print(":");
                 printZero(scheduleHour[i]);
                 display.print(scheduleHour[i]); display.print(":");
