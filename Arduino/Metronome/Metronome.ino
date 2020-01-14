@@ -85,7 +85,6 @@ int sdFlag = 1; // =0 if can't see sd
 
 void setup() {
   SerialUSB.begin(115200); // Serial monitor
-  delay(8000);
   SerialUSB.println("Metronome");
   
   rtc.begin();
