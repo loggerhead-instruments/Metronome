@@ -7,7 +7,6 @@
  To Do:
  - DS3232 RTC (optional)
  - measure current draw
- - sleep GPS
  */
 
 #define metronomeVersion 20200114
@@ -72,8 +71,8 @@ boolean introPeriod=1;  //flag for introductory period; used for keeping LED on 
 
 // GPS
 #define gpsSerial Serial1
-float latitude = 0.0;
-float longitude = 0.0;
+volatile float latitude = 0.0;
+volatile float longitude = 0.0;
 char latHem, lonHem;
 int gpsYear = 20, gpsMonth = 1, gpsDay = 4, gpsHour = 22, gpsMinute = 5, gpsSecond = 0;
 int goodGPS = 0;
@@ -231,6 +230,7 @@ void loop() {
   display.setTextSize(1);
   display.print("Clock Update");
   display.display();
+
   updateGpsTime();  // update real-time clock with GPS time
 
 }
@@ -244,8 +244,6 @@ float readVoltage(){
     adcRead += (float) analogRead(vSense);
   }
   adcRead = adcRead/nReads;
-  SerialUSB.print("V Raw:");
-  SerialUSB.println(adcRead,1);
   float voltage = adcRead * vReg / (vDivider * 1024.0);
   return voltage;
 }
