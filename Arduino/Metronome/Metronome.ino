@@ -7,11 +7,10 @@
  To Do:
  - DS3232 RTC (optional)
  - measure current draw
- - check voltage divider is OK for 12 V input
  - sleep GPS
  */
 
-#define metronomeVersion 20200113
+#define metronomeVersion 20200114
 
 #define MAXTIMES 24
 volatile int nTimes = 4;
@@ -172,10 +171,12 @@ void loop() {
   cDisplay();
   display.println("Sleeping");
   display.setTextSize(1);
+  display.println();
   display.print("Next:");
   display.print(scheduleHour[nextOnTimeIndex]); display.print(":");
   printDigits(scheduleMinute[nextOnTimeIndex]);
   display.println();
+  display.print("Dur: ");
   display.print(duration[nextOnTimeIndex]); display.println(" minutes");
   
   displayVoltage();
@@ -198,6 +199,8 @@ void loop() {
   cDisplay();
   display.println("On");
   display.setTextSize(1);
+  display.println();
+  display.print("Dur: ");
   display.print(duration[nextOnTimeIndex]);
   display.println(" minutes");
   displayVoltage();
@@ -233,9 +236,17 @@ void loop() {
 }
 
 float readVoltage(){
-  float vDivider = 0.5;
-  float vReg = 3.3;
-  float voltage = (float) analogRead(vSense) * vReg / (vDivider * 1024.0);
+  float vDivider = 39.2/139.2;
+  float vReg = 3.6;
+  float adcRead = 0;
+  int nReads = 10;
+  for(int i=0; i<nReads; i++){
+    adcRead += (float) analogRead(vSense);
+  }
+  adcRead = adcRead/nReads;
+  SerialUSB.print("V Raw:");
+  SerialUSB.println(adcRead,1);
+  float voltage = adcRead * vReg / (vDivider * 1024.0);
   return voltage;
 }
 
@@ -262,11 +273,22 @@ void logEntry(int relayStatus){
       logFile.print(',');
       logFile.print(metronomeVersion);
       logFile.print(',');
-      logFile.print(relayStatus);
+      switch(relayStatus){
+        case 0:
+          logFile.print("Off");
+          break;
+        case 1:
+          logFile.print("On");
+          break;
+        case 2:
+          logFile.print("GPS Time");
+          break;
+      }
+      
       logFile.print(',');
-      logFile.print(latitude);
+      logFile.print(latitude, 4);
       logFile.print(',');
-      logFile.println(longitude);
+      logFile.println(longitude, 4);
       logFile.close();
    }
 }
