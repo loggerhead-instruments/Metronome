@@ -221,8 +221,8 @@ void gpsGetTimeLatLon(){
   }
 
   goodGPS = 0;
+  digitalWrite(gpsEnable, HIGH);
   gpsSerial.begin(9600);
-  gpsWake();
   SerialUSB.println("GPS SerialUSB On");
   delay(100);
   gpsSpewOn();
@@ -240,8 +240,8 @@ void gpsGetTimeLatLon(){
   SerialUSB.print("GPS search time:");
   SerialUSB.println(millis()-gpsTimeOutStart);
   gpsSpewOff();
-  gpsSleep();
   gpsSerial.end();
+  digitalWrite(gpsEnable, LOW);
   SerialUSB.print("Good GPS:");
   SerialUSB.println(goodGPS);
 }

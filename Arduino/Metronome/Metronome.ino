@@ -3,10 +3,26 @@
 // c2020
 // David Mann
 
+// Voltage input: 2.5-12 V regulated to 3.6V by boost-buck converter
+
+// Schedule file loaded from card is list of times and durations
+// separated by a space. Maximum of 24 times
+// HH:MM duration(minutes)
+// example
+// 01:00 10
+// 09:00 60
+// 21:00 2
+
+// Display will stay on for first minute of switches powering on
+
 /*
- To Do:
- - DS3232 RTC (optional)
- - measure current draw
+Current draw with LiPo 3.7V
+ - 56 mA at startup with GPS, display On, LED ON
+ - 26 mA with display waiting to start, GPS disabled
+ - 12 mA sleeping with display on, LED on
+ - 1.3 mA sleeping with LED off, display off
+ - 5 mA switched on (but sleeping), LED off, display on
+ - 1.3 mA On, LED off, display off
  */
 
 #define metronomeVersion 20200114
@@ -50,6 +66,7 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 #define pin6 6
 #define pin7 7
 #define vSense A4 
+#define gpsEnable 30
 
 
 volatile float voltage;
@@ -102,6 +119,7 @@ void setup() {
   pinMode(pin6, OUTPUT);
   pinMode(pin7, OUTPUT);
   pinMode(vSense, INPUT);
+  pinMode(gpsEnable, OUTPUT);
   
   digitalWrite(ledGreen, ledOn);
   digitalWrite(ledRed, ledOff);
@@ -113,6 +131,7 @@ void setup() {
   digitalWrite(pin12, LOW);
   digitalWrite(pin6, LOW);
   digitalWrite(pin7, LOW);
+  digitalWrite(gpsEnable, HIGH);
 
   Wire.begin();
 
@@ -177,10 +196,11 @@ void loop() {
   display.println();
   display.print("Dur: ");
   display.print(duration[nextOnTimeIndex]); display.println(" minutes");
-  
   displayVoltage();
-  
   display.display();
+  delay(5000);
+  digitalWrite(ledGreen, ledOff);
+  displayOff();
 
   
   // set alarm and sleep
@@ -195,6 +215,7 @@ void loop() {
   rtc.detachInterrupt();
   rtc.disableAlarm();
 
+  displayOn();
   cDisplay();
   display.println("On");
   display.setTextSize(1);
@@ -210,6 +231,7 @@ void loop() {
 
   // sleep 1 minute at a time and flash led
   rtc.setAlarmSeconds(0);
+
   for(int i = 0; i<duration[nextOnTimeIndex]; i++){
     getTime();
     int alarmMinute = minute + 1;
@@ -222,9 +244,11 @@ void loop() {
     digitalWrite(ledGreen, ledOn);
     delay(100);
     digitalWrite(ledGreen, ledOff);
+    displayOff();
   }
   relayOff(); // turn off
   if(sdFlag) logEntry(0);
+  displayOn();
   cDisplay();
   display.println("GPS");
   display.setTextSize(1);
