@@ -5,22 +5,11 @@
 
 /*
  To Do:
- Requirements:
- turn the system ON every six hours for 40 mins. 
- System should be turned ON at 1:00, 7:00, 13:00, and 19:00
- GPS clock Sync at least once a day should be performed.
-
-- List of Times and durations
-- read schedule from microSD
-
- - log header
  - DS3232 RTC (optional)
-
- - format time and date for log file
  - measure current draw
- - display off during running
  - check voltage divider is OK for 12 V input
  - scroll list of input times if more than 8 with UP/DN
+ - sleep GPS
  */
 
 #define metronomeVersion 20200113
@@ -149,8 +138,8 @@ void setup() {
     if(!goodGPS){
         SerialUSB.println("Unable to get GPS");
         cDisplay();
-        display.println();
-        display.println("Wait for GPS");
+        display.println("GPS No Fix");
+        display.setTextSize(1);
         display.println("Do not deploy");
         display.display();
         delay(2000);
@@ -160,6 +149,7 @@ void setup() {
   rtc.setDate(gpsDay, gpsMonth, gpsYear);
 
   if(sdFlag){
+    logFileHeader();
     int nLines = loadSchedule();
     if(nLines>0) nTimes = nLines;
   }
@@ -209,7 +199,8 @@ void loop() {
   cDisplay();
   display.println("On");
   display.setTextSize(1);
-  display.println(duration[nextOnTimeIndex]);
+  display.print(duration[nextOnTimeIndex]);
+  display.println(" minutes");
   displayVoltage();
   display.display();
   // turn on all 4 channels
@@ -233,7 +224,12 @@ void loop() {
   }
   relayOff(); // turn off
   if(sdFlag) logEntry(0);
- // updateGpsTime();  // update real-time clock with GPS time
+  cDisplay();
+  display.println("GPS");
+  display.setTextSize(1);
+  display.print("Clock Update");
+  display.display();
+  updateGpsTime();  // update real-time clock with GPS time
 
 }
 
@@ -249,6 +245,7 @@ int updateGpsTime(){
   if(goodGPS){
     rtc.setTime(gpsHour, gpsMinute, gpsSecond);
     rtc.setDate(gpsDay, gpsMonth, gpsYear);
+    if(sdFlag) logEntry(2);
   }
   return(goodGPS);
 }
@@ -259,14 +256,25 @@ void logEntry(int relayStatus){
    float voltage = readVoltage();
    if(File logFile = sd.open("LOG.CSV",  O_CREAT | O_APPEND | O_WRITE)){
       char timestamp[30];
-      sprintf(timestamp,"%d-%02d-%02dT%02d:%02d:%02d", year, month, day, hour, minute, second);
+      sprintf(timestamp,"%d-%02d-%02dT%02d:%02d:%02d", year+2000, month, day, hour, minute, second);
       logFile.print(timestamp);
       logFile.print(',');
       logFile.print(voltage); 
       logFile.print(',');
       logFile.print(metronomeVersion);
       logFile.print(',');
-      logFile.println(relayStatus);
+      logFile.print(relayStatus);
+      logFile.print(',');
+      logFile.print(latitude);
+      logFile.print(',');
+      logFile.println(longitude);
+      logFile.close();
+   }
+}
+
+void logFileHeader(){
+  if(File logFile = sd.open("LOG.CSV",  O_CREAT | O_APPEND | O_WRITE)){
+      logFile.println("Datetime,Voltage,Version,Status,Latitude,Longitude");
       logFile.close();
    }
 }
