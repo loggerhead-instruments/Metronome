@@ -85,8 +85,9 @@ int sdFlag = 1; // =0 if can't see sd
 
 void setup() {
   SerialUSB.begin(115200); // Serial monitor
-  delay(5000);
+  delay(8000);
   SerialUSB.println("Metronome");
+  
   rtc.begin();
   pinMode(ledGreen, OUTPUT);
   pinMode(ledRed, OUTPUT);
@@ -262,6 +263,7 @@ void logEntry(int relayStatus){
    getTime();
    // log file
    float voltage = readVoltage();
+
    if(File logFile = sd.open("LOG.CSV",  O_CREAT | O_APPEND | O_WRITE)){
       char timestamp[30];
       sprintf(timestamp,"%d-%02d-%02dT%02d:%02d:%02d", year+2000, month, day, hour, minute, second);

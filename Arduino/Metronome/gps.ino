@@ -59,87 +59,59 @@ int gps(byte incomingByte){
       }
 
       if(gpsStream[1]=='G' & gpsStream[2]=='P' &  gpsStream[3]=='R' &  gpsStream[4]=='M' &  gpsStream[5]=='C'){
-       char temp[streamPos + 1];
-       //char temp[100];
-       const char s[2] = ",";
-       char *token;
-            
-        memcpy(&temp, &gpsStream, streamPos);
-        //SerialUSB.println(temp);s
-        //testing with a known string 72 chars
-        //strcpy(temp, "$GNRMC,134211.000,A,2715.5428,N,08228.7924,W,1.91,167.64,020816,43,W,A*62");  
-        //SerialUSB.println(temp);
-        
-        token = strtok(temp, s);
-        sprintf(rmcCode, "%s", token);
-        //SerialUSB.println(rmcCode);
+         char temp[streamPos + 1];
+         //char temp[100];
+         const char s[2] = ",";
+         char *token;
 
-        token = strtok(NULL, s);
-        sscanf(token, "%f", &rmcTime);
-        sscanf(token, "%2d%2d%2d", &gpsHour, &gpsMinute, &gpsSecond);
-        //SerialUSB.println(rmcTime);
+         char splitStr[13][15];
+         int j = 0;
+         int k = 0;
+         // parse GPS Stream
+         for(int i=0; i<streamPos; i++){
+          //SerialUSB.print("NextVal:");
+          //SerialUSB.println(gpsStream[i]);
+          if(gpsStream[i]!=',') 
+            splitStr[j][k] = gpsStream[i];
+          else{
+            splitStr[j][k] = '\0';
+            SerialUSB.print(j); SerialUSB.print(":");
+            SerialUSB.println(splitStr[j]);
+            k = -1;  // so ends up being 0 after k++
+            j++;
+          }
+          k++;
+         }
+         splitStr[j][k] = '\0'; // terminate last one
 
-        token = strtok(NULL, s);
-        sprintf(rmcValid, "%s", token);
-        //SerialUSB.println(rmcValid);
+         sscanf(splitStr[1], "%2d%2d%2d", &gpsHour, &gpsMinute, &gpsSecond); 
+         sscanf(splitStr[2], "%s", rmcValid);  
+         String rmcLatStr = String(splitStr[3]);
+         rmcLat = rmcLatStr.toFloat();
+         sscanf(splitStr[4], "%s", rmcLatHem);
+         String rmcLonStr = String(splitStr[5]);
+         rmcLon = rmcLonStr.toFloat(); 
+         sscanf(splitStr[6], "%s", rmcLonHem);
+         sscanf(splitStr[9], "%2d%2d%2d", &gpsDay, &gpsMonth, &gpsYear);
 
-        token = strtok(NULL, s);
-        sscanf(token, "%f", &rmcLat);
-        //SerialUSB.println(rmcLat, 6);
+//         SerialUSB.print("rmcLat:"); SerialUSB.println(rmcLat, 6);
+//         SerialUSB.print("rmcLon:"); SerialUSB.println(rmcLon, 6);
 
-        token = strtok(NULL, s);
-        sprintf(rmcLatHem, "%s", token);
-        //SerialUSB.println(rmcLatHem);
-
-        token = strtok(NULL, s);
-        sscanf(token, "%f", &rmcLon);
-        //SerialUSB.println(rmcLon, 6);
-
-        token = strtok(NULL, s);
-        sprintf(rmcLonHem, "%s", token);
-        //SerialUSB.println(rmcLonHem);
-        
-        token = strtok(NULL, s);
-        sscanf(token, "%f", &rmcSpeed);
-        //SerialUSB.println(rmcSpeed);
-
-        token = strtok(NULL, s);
-        sscanf(token, "%f", &rmcCourse);
-        //SerialUSB.println(rmcCourse);  
-
-        token = strtok(NULL, s);
-        sprintf(rmcDate, "%s", token);
-        sscanf(token, "%2d%2d%2d", &gpsDay, &gpsMonth, &gpsYear);
-        //gpsYear += 2000;
-//        SerialUSB.println(rmcDate);
-//        SerialUSB.print("Day-Month-Year:");
-//        SerialUSB.print(gpsDay); SerialUSB.print("-");
-//        SerialUSB.print(gpsMonth);  SerialUSB.print("-");
-//        SerialUSB.println(gpsYear);
-
-        token = strtok(NULL, s);
-        sscanf(token, "%f", &rmcMag);
-        //SerialUSB.println(rmcMag);          
-
-        token = strtok(NULL, s);
-        sprintf(rmcMagHem, "%s", token);
-        //SerialUSB.println(rmcMagHem);    
-
-        token = strtok(NULL, s);
-        sprintf(rmcChecksum, "%s", token);
-        //SerialUSB.println(rmcChecksum);         
-
-        if(rmcValid[0]=='A'){
-           latitude = rmcLat;
-           longitude = rmcLon;
+         float tempLatitude, tempLongitude;
+         if(rmcValid[0]=='A'){
+           tempLatitude = rmcLat;
+           tempLongitude = rmcLon;
            latHem = rmcLatHem[0];
            lonHem = rmcLonHem[0];
-           if(latHem=='S') latitude = -latitude;
-           if(lonHem=='W') longitude = -longitude;
-           latitude = convertDegMinToDecDeg(latitude);
-           longitude = convertDegMinToDecDeg(longitude);
+           if(latHem=='S') tempLatitude = -tempLatitude;
+           if(lonHem=='W') tempLongitude = -tempLongitude;
+           latitude = convertDegMinToDecDeg(tempLatitude);
+           longitude = convertDegMinToDecDeg(tempLongitude);
            goodGPS = 1;
-           SerialUSB.println("valid GPS recvd");
+//           SerialUSB.print("Temp Lat:"); SerialUSB.println(tempLatitude);
+//           SerialUSB.print("Temp Lon:"); SerialUSB.println(tempLongitude);
+//           SerialUSB.print("Lat:"); SerialUSB.println(latitude);
+//           SerialUSB.print("Lon:"); SerialUSB.println(longitude);
         }
       }
     }
@@ -221,15 +193,15 @@ void waitForGPS(){
 //}
 
 double convertDegMinToDecDeg(float degMin) {
-  double min = 0.0;
+  double minDeg = 0.0;
   double decDeg = 0.0;
  
   //get the minutes, fmod() requires double
-  min = fmod((double)degMin, 100.0);
+  minDeg = fmod((double)degMin, 100.0);
  
   //rebuild coordinates in decimal degrees
   degMin = (int) ( degMin / 100 );
-  decDeg = degMin + ( min / 60 );
+  decDeg = degMin + ( minDeg / 60 );
  
   return decDeg;
 }
