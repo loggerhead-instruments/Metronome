@@ -12,9 +12,15 @@
 
 - List of Times and durations
 - read schedule from microSD
- - run
+
  - log header
  - DS3232 RTC (optional)
+
+ - format time and date for log file
+ - measure current draw
+ - display off during running
+ - check voltage divider is OK for 12 V input
+ - scroll list of input times if more than 8 with UP/DN
  */
 
 #define metronomeVersion 20200113
@@ -22,9 +28,9 @@
 #define MAXTIMES 24
 volatile int nTimes = 4;
 int scheduleHour[] = {1,7,13,22,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; //start hour
-int scheduleMinute[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; // start minute
+int scheduleMinute[] = {0,0,0,30,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; // start minute
 float scheduleFracHour[MAXTIMES];
-int duration[] = {40,40,40,40,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};  // duration on in minutes
+int duration[] = {40,40,40,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};  // duration on in minutes
 
 #include <SPI.h>
 #include <Wire.h>
@@ -175,14 +181,16 @@ void loop() {
   SerialUSB.print(scheduleMinute[nextOnTimeIndex]);
 
   cDisplay();
-  display.println("Next");
+  display.println("Sleeping");
   display.setTextSize(1);
+  display.print("Next:");
   display.print(scheduleHour[nextOnTimeIndex]); display.print(":");
-  display.println(scheduleMinute[nextOnTimeIndex]);
+  printDigits(scheduleMinute[nextOnTimeIndex]);
+  display.println();
   display.print(duration[nextOnTimeIndex]); display.println(" minutes");
+  
   displayVoltage();
   
-  displayClock(BOTTOM);
   display.display();
 
   
@@ -198,6 +206,12 @@ void loop() {
   rtc.detachInterrupt();
   rtc.disableAlarm();
 
+  cDisplay();
+  display.println("On");
+  display.setTextSize(1);
+  display.println(duration[nextOnTimeIndex]);
+  displayVoltage();
+  display.display();
   // turn on all 4 channels
   relayOn();
   if(sdFlag) logEntry(1);
@@ -240,18 +254,13 @@ int updateGpsTime(){
 }
 
 void logEntry(int relayStatus){
-   char filename[30];
    getTime();
-
    // log file
    float voltage = readVoltage();
    if(File logFile = sd.open("LOG.CSV",  O_CREAT | O_APPEND | O_WRITE)){
-      logFile.print(year);logFile.print("-");
-      logFile.print(month);logFile.print("-");
-      logFile.print(day);logFile.print("T");
-      logFile.print(hour);logFile.print(":");
-      logFile.print(minute); logFile.print(":");
-      logFile.print(second);
+      char timestamp[30];
+      sprintf(timestamp,"%d-%02d-%02dT%02d:%02d:%02d", year, month, day, hour, minute, second);
+      logFile.print(timestamp);
       logFile.print(',');
       logFile.print(voltage); 
       logFile.print(',');

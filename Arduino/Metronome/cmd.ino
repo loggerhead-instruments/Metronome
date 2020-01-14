@@ -2,26 +2,30 @@ int loadSchedule()
 {
   char s[30];
   char c;
-  short i;
+  short i = 0;
   int j = 0;
 
   File file;
 
+  delay(1000);
+
   // Read simulated depth file
   file = sd.open("schedule.txt", FILE_READ);
-  SerialUSB.println("Schedule file");
+  SerialUSB.print("Schedule file: ");
   SerialUSB.println(file);
+  delay(1000);
   if(file){
     do{
       j = 0;
       do{ // scan next line
         c = file.read();
+        SerialUSB.write(c);
         if(c!='\r') s[j] = c;
         j++;
         if(j>29) break;
       }while(c!='\n');
-      SerialUSB.print(c);
-      sscanf(s,"%d:%d,%d",scheduleHour[i],scheduleMinute[i],duration[i]);
+
+      sscanf(&s[0],"%d:%d %d",&scheduleHour[i],&scheduleMinute[i],&duration[i]);
       SerialUSB.print(i); SerialUSB.print(" ");
       SerialUSB.print(scheduleHour[i]);SerialUSB.print(":");
       SerialUSB.print(scheduleMinute[i]);SerialUSB.print(" ");
