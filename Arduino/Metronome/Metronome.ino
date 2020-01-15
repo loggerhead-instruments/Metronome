@@ -280,6 +280,9 @@ int updateGpsTime(){
     rtc.setDate(gpsDay, gpsMonth, gpsYear);
     if(sdFlag) logEntry(2);
   }
+  else{
+    if(sdFlag) logEntry(3);
+  }
   return(goodGPS);
 }
 
@@ -310,6 +313,9 @@ void logEntry(int relayStatus){
           break;
         case 2:
           logFile.print("GPS Time");
+          break;
+        case 3:
+          logFile.print("GPS no fix");
           break;
       }
       
