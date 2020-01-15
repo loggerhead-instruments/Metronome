@@ -25,7 +25,7 @@ Current draw with LiPo 3.7V
  - 1.3 mA On, LED off, display off
  */
 
-#define metronomeVersion 20200114
+#define metronomeVersion 20200115
 
 #define MAXTIMES 24
 volatile int nTimes = 4;
@@ -33,6 +33,7 @@ int scheduleHour[] = {1,7,13,22,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; //star
 int scheduleMinute[] = {0,0,0,30,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; // start minute
 float scheduleFracHour[MAXTIMES];
 int duration[] = {40,40,40,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};  // duration on in minutes
+int nextOnTimeIndex;
 
 #include <SPI.h>
 #include <Wire.h>
@@ -180,7 +181,7 @@ void setup() {
 void loop() {
   // get next wake time from list based on current time
   getTime();
-  int nextOnTimeIndex = getNextOnTime();
+  nextOnTimeIndex = getNextOnTime();
   printTime();
   SerialUSB.print("Next Start:");
   SerialUSB.print(scheduleHour[nextOnTimeIndex]);SerialUSB.print(":");
@@ -296,6 +297,10 @@ void logEntry(int relayStatus){
       logFile.print(',');
       logFile.print(metronomeVersion);
       logFile.print(',');
+      logFile.print(nextOnTimeIndex);
+      logFile.print(',');
+      logFile.print(duration[nextOnTimeIndex]);
+      logFile.print(',');
       switch(relayStatus){
         case 0:
           logFile.print("Off");
@@ -318,7 +323,7 @@ void logEntry(int relayStatus){
 
 void logFileHeader(){
   if(File logFile = sd.open("LOG.CSV",  O_CREAT | O_APPEND | O_WRITE)){
-      logFile.println("Datetime,Voltage,Version,Status,Latitude,Longitude");
+      logFile.println("Datetime,Voltage,Version,Index,Duration,Status,Latitude,Longitude");
       logFile.close();
    }
 }
