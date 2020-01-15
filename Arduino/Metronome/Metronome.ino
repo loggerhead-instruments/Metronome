@@ -27,12 +27,13 @@ Current draw with LiPo 3.7V
 
 #define metronomeVersion 20200115
 
-#define MAXTIMES 24
+#define MAXTIMES 200
 volatile int nTimes = 4;
-int scheduleHour[] = {1,7,13,22,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; //start hour
-int scheduleMinute[] = {0,0,0,30,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; // start minute
+volatile int scheduleHour[MAXTIMES];
+volatile int scheduleMinute[MAXTIMES];
+volatile int duration[MAXTIMES];
 float scheduleFracHour[MAXTIMES];
-int duration[] = {40,40,40,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};  // duration on in minutes
+
 int nextOnTimeIndex;
 
 #include <SPI.h>
@@ -103,6 +104,7 @@ int sdFlag = 1; // =0 if can't see sd
 
 void setup() {
   SerialUSB.begin(115200); // Serial monitor
+  // while(!SerialUSB);  //wait for Serial (debugging)
   SerialUSB.println("Metronome");
   
   rtc.begin();
@@ -142,12 +144,24 @@ void setup() {
   display.println("Metronome");
   display.display();
 
- if (!sd.begin(10, SPI_FULL_SPEED)) {
+ while (!sd.begin(10, SPI_FULL_SPEED)) {
+    cDisplay();
+    display.println("Error");
+    display.println();
     SerialUSB.println("Card failed");
     display.println("No SD Card");
     sdFlag = 0;
     display.display();
-    delay(5000);
+    delay(2000);
+    cDisplay();
+    display.println("Error");
+    display.display();
+    delay(100);
+  }
+  if(sdFlag){
+    logFileHeader();
+    int nLines = loadSchedule();
+    if(nLines>0) nTimes = nLines;
   }
 
   while(!goodGPS){
@@ -164,12 +178,6 @@ void setup() {
   }
   rtc.setTime(gpsHour, gpsMinute, gpsSecond);
   rtc.setDate(gpsDay, gpsMonth, gpsYear);
-
-  if(sdFlag){
-    logFileHeader();
-    int nLines = loadSchedule();
-    if(nLines>0) nTimes = nLines;
-  }
 
   manualSettings();
   
@@ -236,7 +244,7 @@ void loop() {
   for(int i = 0; i<duration[nextOnTimeIndex]; i++){
     getTime();
     int alarmMinute = minute + 1;
-    if(minute>59) minute = 0;
+    if(alarmMinute>59) alarmMinute = 0;
     rtc.setAlarmMinutes(alarmMinute);
     rtc.enableAlarm(rtc.MATCH_MMSS);
     rtc.attachInterrupt(alarmMatch);
