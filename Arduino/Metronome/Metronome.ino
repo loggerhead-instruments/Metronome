@@ -236,7 +236,7 @@ void loop() {
     getTime();
     int alarmMinute = minute + 1;
     if(minute>59) minute = 0;
-    rtc.setAlarmMinutes(minute + 1);
+    rtc.setAlarmMinutes(alarmMinute);
     rtc.enableAlarm(rtc.MATCH_MMSS);
     rtc.attachInterrupt(alarmMatch);
     rtc.standbyMode();
