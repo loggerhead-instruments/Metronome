@@ -25,7 +25,7 @@ Current draw with LiPo 3.7V
  - 1.3 mA On, LED off, display off
  */
 
-#define metronomeVersion 20200115
+#define metronomeVersion 20200127
 
 #define MAXTIMES 200
 volatile int nTimes = 4;
