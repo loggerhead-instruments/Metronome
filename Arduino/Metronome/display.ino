@@ -62,6 +62,7 @@ void manualSettings(){
       }
       curMenuItem++;
       if(curMenuItem>=maxMenuItem) curMenuItem = 0;
+      settingsChanged = 1;
     }
     
     selectVal = digitalRead(downButton);
@@ -71,6 +72,7 @@ void manualSettings(){
       }
       curMenuItem--;
       if(curMenuItem<0) curMenuItem = maxMenuItem - 1;
+      settingsChanged = 1;
     }
 
 
