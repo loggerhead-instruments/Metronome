@@ -164,18 +164,17 @@ void setup() {
     if(nLines>0) nTimes = nLines;
   }
 
-  while(!goodGPS){
     gpsGetTimeLatLon();
     if(!goodGPS){
         SerialUSB.println("Unable to get GPS");
         cDisplay();
         display.println("GPS No Fix");
         display.setTextSize(1);
-        display.println("Do not deploy");
+        display.println("Check Time");
         display.display();
-        delay(2000);
+        delay(10000);
     }
-  }
+
   rtc.setTime(gpsHour, gpsMinute, gpsSecond);
   rtc.setDate(gpsDay, gpsMonth, gpsYear);
 

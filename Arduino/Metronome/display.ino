@@ -4,6 +4,7 @@
 boolean settingsChanged = 0;
 int curMenuItem = 0;
 volatile int maxMenuItem = 2;
+unsigned long autoStartTime;
 char *menuItem[] = {"Start",
                      "Schedule",
                      };
@@ -37,10 +38,21 @@ void printZero(int val){
 
 void manualSettings(){
   boolean startRec = 0, startUp, startDown;
-
+  autoStartTime = getUnixTime();
   // Main Menu Loop
    while(startRec==0){
 
+
+    if(getUnixTime() - autoStartTime > 60){
+      cDisplay();
+      display.println("Starting..");
+      display.setTextSize(1);
+      display.display();
+      delay(2000);
+      startRec = 1;  //start recording 
+    }
+    
+    
     // Check for button press
     boolean selectVal = digitalRead(upButton);
 
@@ -123,7 +135,7 @@ void manualSettings(){
       
       if (settingsChanged) {
         settingsChanged = 0;
-        // autoStartTime = getTeensy3Time();  //reset autoStartTime
+        autoStartTime = getUnixTime();  //reset autoStartTime
       }
     }
 
