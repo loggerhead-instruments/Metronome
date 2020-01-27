@@ -1,7 +1,6 @@
 #define setStart 0
 #define setSchedule 1
 
-boolean settingsChanged = 0;
 int curMenuItem = 0;
 volatile int maxMenuItem = 2;
 unsigned long autoStartTime;
@@ -62,7 +61,7 @@ void manualSettings(){
       }
       curMenuItem++;
       if(curMenuItem>=maxMenuItem) curMenuItem = 0;
-      settingsChanged = 1;
+      autoStartTime = getUnixTime();
     }
     
     selectVal = digitalRead(downButton);
@@ -72,7 +71,7 @@ void manualSettings(){
       }
       curMenuItem--;
       if(curMenuItem<0) curMenuItem = maxMenuItem - 1;
-      settingsChanged = 1;
+      autoStartTime = getUnixTime();
     }
 
 
@@ -95,6 +94,7 @@ void manualSettings(){
             break;
         case setSchedule:
             while(digitalRead(enterButton)==1){
+              autoStartTime = getUnixTime();
               int startTimeIndex;
               int endTimeIndex;
               if(digitalRead(downButton)==0) {
@@ -133,11 +133,6 @@ void manualSettings(){
             while(digitalRead(enterButton)==0); // wait to let go
             curMenuItem = setStart;
             break;
-      }
-      
-      if (settingsChanged) {
-        settingsChanged = 0;
-        autoStartTime = getUnixTime();  //reset autoStartTime
       }
     }
 
