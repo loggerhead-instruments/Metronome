@@ -162,6 +162,8 @@ void setup() {
     logFileHeader();
     int nLines = loadSchedule();
     if(nLines>0) nTimes = nLines;
+    SerialUSB.print("Lines:");
+    SerialUSB.println(nLines);
   }
 
     gpsGetTimeLatLon();

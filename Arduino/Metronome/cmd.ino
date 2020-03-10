@@ -6,7 +6,6 @@ int loadSchedule()
   int j = 0;
 
   File file;
-  // Read simulated depth file
   file = sd.open("schedule.txt", FILE_READ);
   SerialUSB.print("Schedule file: ");
   SerialUSB.println(file);
@@ -14,15 +13,12 @@ int loadSchedule()
     do{
       int n;
       if(n = file.fgets(s, sizeof(s))){
-        if(s[n-1]=='\n'){
-          s[n-1]=0; // remove '\n'
-        }
-        sscanf(&s[0],"%i:%i %i",&scheduleHour[i],&scheduleMinute[i],&duration[i]);
+        sscanf(&s[0],"%d:%d %d",&scheduleHour[i],&scheduleMinute[i],&duration[i]);
         SerialUSB.print(i); SerialUSB.print(" ");
         SerialUSB.print(scheduleHour[i]);SerialUSB.print(":");
         SerialUSB.print(scheduleMinute[i]);SerialUSB.print(" ");
         SerialUSB.println(duration[i]);
-        if(duration[i]>0) i++;  // this gets rid of blank lines
+        i++;  // this gets rid of blank lines
         if(i==MAXTIMES) break;
       }
     }while(file.available());
